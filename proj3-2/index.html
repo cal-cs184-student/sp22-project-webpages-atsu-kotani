@@ -1,7 +1,226 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+    body {
+        background-color: white;
+        padding: 100px;
+        width: 1000px;
+        margin: auto;
+        text-align: left;
+        font-weight: 300;
+        font-family: 'Open Sans', sans-serif;
+        color: #121212;
+        table-layout: fixed;
+        display: table;
+    }
+    h1, h2, h3, h4 {
+        font-family: 'Source Sans Pro', sans-serif;
+    }
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 0px;  
+      padding-bottom: 0.25in;
+      padding-left: 0px;  
+    }  
+</style> 
+<title>Atsunobu Kotani  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+<script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+</script>
+<script id="MathJax-script" async
+src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3-2: PathTracer</h1>
+<h2 align="middle">Atsunobu Kotani</h2>
+
+<div class="padded">
+    <p>
+        In this project, I have implemented the second part of Assignment 3, which extends the first half by allowing the program model objects with more realistic materials, such as mirror, glass and microfacet. Most problems that I encountered during implementation are related to dealing with the edge cases, such as validating the ray in relation to its normal vector, and small details in modifying specific values, such as keeping the track of positive / negative sign of cosine elements. For debugging them, I re-followed the provided instructions very carefully, which always helped me to correct the wrong line of codes. For grading, I worked on Part 1 and Part 2 of this project.
+    </p>
+
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+    <b>
+      Show a sequence of six images of scene CBspheres.dae rendered with max_ray_depth set to 0, 1, 2, 3, 4, 5, and 100. The other settings should be at least 64 samples per pixel and 4 samples per light.
+    </b>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/part1_0.png" align="middle" width="250px"/>
+            <figcaption>max_ray_depth=0</figcaption>
+          </td>
+          <td>
+            <img src="images/part1_1.png" align="middle" width="250px"/>
+            <figcaption>max_ray_depth=1</figcaption>
+          </td>
+          <td>
+            <img src="images/part1_2.png" align="middle" width="250px"/>
+            <figcaption>max_ray_depth=2</figcaption>
+          </td>
+          <td>
+            <img src="images/part1_3.png" align="middle" width="250px"/>
+            <figcaption>max_ray_depth=3</figcaption>
+          </td>
+        </tr>
+      </table>
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/part1_4.png" align="middle" width="333px"/>
+            <figcaption>max_ray_depth=4</figcaption>
+          </td>
+          <td>
+            <img src="images/part1_5.png" align="middle" width="333px"/>
+            <figcaption>max_ray_depth=5</figcaption>
+          </td>
+          <td>
+            <img src="images/part1_100.png" align="middle" width="333px">
+            <figcaption>max_ray_depth=100</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <b>
+      Point out the new multibounce effects that appear in each image.
+    </b>
+    <p>
+      max_ray_depth = 0 only shows the 0 bounce light from the light source to the camera, and max_ray_depth = 1 shows the direct light (0 + 1 bounce light). Now the side walls and floor with ball shadows are visible. The left ball with mirror materials show bright reflected light from the light source, whereas the right ball with glass material shows less brightness in the reflected parts of the light source. This is due of the refraction; light is entering the glass material, and unlike a mirror material with perfect specular reflection, the light from the light source does not always get reflected to the camera with this material.
+    </p>
+    <p>
+      In max_ray_depth = 2, I start seeing the reflected light on the ceiling as well as the left ball with some texture. However, counting the number of bounces of light, the ceiling of the left ball texture is still black, encapsulating the scene from the previous setting (i.e. max_ray_depth = 1). About the right ball, on the right bottom edge, I see the light from the light source, which just finished passeing through the glass ball. Notably, the color bleeding effects start to appear; for the left ball, the light bounced off from the red wall is now creating a red cast in the shadow, and for the right ball, the light bounced off from the blue wall is now creating a blue cast in the shadow.
+    </p>
+    <p>
+      In max_ray_depth = 3, the right ball now also has some texture, showing the blue wall on the left side of the ball. Also, now the light finished passeing throught the glass ball and projected onto the floor. It is important to mention that there is still a dark edge at the right bottom of this ball. This is because the light has not yet bounce back from the floor to the ball. In contrast, for the left mirror ball, there is a bounce light from the floor, giving a hint of red to the shadow in the ball, showing the shadow from the previous step (i.e. max_ray_depth = 2).
+    </p>
+    <p>
+      In max_ray_depth = 4, the most notable change is the light hotspt on the blue wall, concentrated through the glass ball. This shows the bounced light from the left mirror ball, finished passing through the glass ball. The dark edge of the glass ball that I mentioned earlier is also gone, as the light from the floor is now projected back onto the bottom of the glass ball. Notice that this is the time when the left mirror ball starts showing the glass ball, instead of the black ball.
+    </p>
+    <p>
+      From max_ray_depth > 4, I stop seeing significant changes in the scene, except for some small changes, such as the slight increase in color bleeding effects from two walls, softened shadows, and the light reflecting back and forth within the glass ball (as the sparkles in the top of the glass ball from max_ray_depth=100 demonstrates).
+    </p>
+
+    <b>
+      Explain how these bounce numbers relate to the particular effects that appear.
+    </b>
+    <p>
+      Here I show the examples of multibounce effects discussed above.
+      <ul>
+        <li>0 bounce : Light -> Camera</li>
+        <li>1 bounce : Light -> Wall -> Camera</li>
+        <li>2 bounce : Light -> Wall -> Mirror Ball -> Camera</li>
+        <li>3 bounce : Light -> Glass Ball In -> Glass Ball Out -> Floor -> Camera</li>
+        <li>4 bounce : Light -> Mirror Ball -> Glass Ball In -> Glass Ball Out -> Right Blue Wall -> Camera</li>
+      </ul>
+      In order for the light hotspot to appear on the blue wall, 4 bounces are at least needed, and this demonstrates that these bounce numbers, max_ray_depth, set the hard limit to which effects to appear on screen.      
+    </p>
+
+    <h2 align="middle">Part 2: Microfacet Material</h2>
+    <b>
+      Show a sequence of 4 images of scene CBdragon_microfacet_au.dae rendered with α set to 0.005, 0.05, 0.25 and 0.5. The other settings should be at least 128 samples per pixel and 1 samples per light. The number of bounces should be at least 5. Describe the differences between different images. Note that, to change the α, just open the .dae file and search for microfacet.
+    </b>
+    <div align="middle">
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/part2_p1_0.005.png" align="middle" width="400px"/>
+            <figcaption>alpha = 0.005</figcaption>
+          </td>
+          <td>
+            <img src="images/part2_p1_0.05.png" align="middle" width="400px"/>
+            <figcaption>alpha = 0.05</figcaption>
+          </td>
+        </tr>
+        <tr align="center">
+          <td>
+            <img src="images/part2_p1_0.25.png" align="middle" width="400px"/>
+            <figcaption>alpha = 0.25</figcaption>
+          </td>
+          <td>
+            <img src="images/part2_p1_0.5.png" align="middle" width="400px"/>
+            <figcaption>alpha = 0.5</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      \(\alpha\) controls the roughness of the surface, and as we increase the value of \(\alpha\), the object becomes less specular. When \(\alpha\) is relatively small (e.g.  \(\alpha=0.005\) or \(\alpha=0.05\)), the light from the light source are reflected by the dragon without much of the diffusion effects, generating a light sprinkles onto the walls, celing and floor. This effect is particularly visible when I render with few samples per light. But as I increase the \(\alpha\), the surface of the object tend to diffuse more and the issue of strong concentration of the reflected light disappears. This is also related to the texture at the back of the dragon's tail; when \(\alpha\) is small, there is not much highlight, but as \(\alpha\) increases, it gets highlighted more and more.
+    </p>
+
+    <b>
+      Show two images of scene CBbunny_microfacet_cu.dae rendered using cosine hemisphere sampling (default) and your importance sampling. The sampling rate should be fixed at 64 samples per pixel and 1 samples per light. The number of bounces should be at least 5. Briefly discuss their difference.
+    </b>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/part2_p2_h.png" align="middle" width="400px"/>
+            <figcaption>Cosine Hemisphere Sampling</figcaption>
+          </td>
+          <td>
+            <img src="images/part2_p2_is.png" align="middle" width="400px"/>
+            <figcaption>Importance Sampling</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      The above images show the rendered results of two sampling methods: cosine hemisphere sampling and importance sampling with 64 samples per pixel and 1 sample per light. The result from cosine hemisphere sampling shows a darker dragon object, compared to the one from importance sampling, illustrating that it converges to the true solution so much slower than the importance sampling method. Cosine hemisphere sampling is a modified uniform hemisphere sampling method that instead samples a point on a disk, projects the point onto the upper hemisphere and finds the corresponding vector in 3D space. This method is suitable for importance sampling the diffuse BRDF, but as this part of the project defines the microfacet BSDF with the Beckmann distribution as its normal distribution function (NDF), the implemented importance sampling strategy rather focuses on the dirstributions of microfacets' normals. This sampling method is particularly effective when those distribution is concentrated.
+    </p>
+    <p>
+      Accordingly, if the surface materials diffuse more, there will be not much of the differences in rendered results from two sampling methods.
+    </p>
+
+
+    <b>
+      Show at least one image with some other conductor material, replacing eta and k. Note that you should look up values for real data rather than modifying them arbitrarily. Tell us what kind of material your parameters correspond to.
+    </b>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/part2_p3_0.5.png" align="middle" width="400px"/>
+            <figcaption>Silver (Ag), alpha = 0.5</figcaption>
+          </td>
+          <td>
+            <img src="images/part2_p3_0.005.png" align="middle" width="400px"/>
+            <figcaption>Silver (Ag), alpha = 0.005</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      I changed the material of the CBdragon_microfacet_au.dae to silver (Ag) and replaced the existing \(\eta\) and \(k\) values with the corresponding ones at 614 nm, 549 nm and 466 nm, respectively.
+      The resulting \(\eta\) is \([0.059193, 0.059881, 0.047366]\), and \(k\) is \([4.1283, 3.5892, 2.8132]\). I searched these values from <a href="https://refractiveindex.info/?shelf=main&book=Ag&page=Johnson">this webpage</a>, and the relevant plot for silver (Ag) is shown below.
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr align="center">
+          <td>
+            <img src="images/silver.png" align="middle" width="400px"/>
+            <figcaption>Reflactive Index of Silver (Ag)</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+
+</div>
+</body>
 </html>
